@@ -58,7 +58,7 @@ CREATE TABLE os_address.nspl
 copy os_address.nspl (pcd, pcd2, pcds, dointr, doterm, usertype, oseast1m, osnrth1m, osgrdind, oa11, cty, ced, laua, ward, hlthau, nhser, ctry, rgn, pcon, eer, teclec, ttwa, pct, nuts, park, lsoa11, msoa11, wz11, ccg, bua11, buasd11, ru11ind, oac11, lat, "long", lep1, lep2, pfa, imd, calncv, stp)
 from 'C:\OS\ONS Postcodes\NSPL_MAY_2019_UK\Data\NSPL_MAY_2019_UK.csv' delimiter ',' quote '"' escape '"' csv HEADER;
 
---add a geometry column - using crs 4258 which matches the crs of the addressbase and vat data
+--add a geometry column - using crs 4258 which matches the crs of the addressbase data
 alter table os_address.nspl
 add column  geom geometry(Point,4258) NULL 
 
