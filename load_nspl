@@ -1,0 +1,84 @@
+--This code creates a table to load the National Statistics Postcode Lookup (NSPL) data
+--THE NSPL is the only record of historical postcodes
+--You can download the latest version from the ONS 
+--https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=PRD_NSPL
+
+--Create schema if needed
+CREATE SCHEMA IF NOT Exists os_address
+
+--Create a table
+DROP TABLE if exists os_address.nspl;
+
+CREATE TABLE os_address.nspl
+(
+    pcd character varying(7),
+    pcd2 character varying(8),
+    pcds character varying(8),
+    dointr character varying(6),
+    doterm character varying(6),
+    usertype smallint,
+    oseast1m character varying(20),
+    osnrth1m character varying(20),
+    osgrdind smallint,
+    oa11 character varying(9),
+    cty character varying(9),
+    ced character varying(9),
+    laua character varying(9),
+    ward character varying(9),
+    hlthau character varying(9),
+    nhser character varying(9),
+    ctry character varying(9),
+    rgn character varying(9),
+    pcon character varying(9),
+    eer character varying(9),
+    teclec character varying(9),
+    ttwa character varying(9),
+    pct character varying(9),
+    nuts character varying(9),
+    park character varying(9),
+    lsoa11 character varying(9),
+    msoa11 character varying(9),
+    wz11 character varying(9),
+    ccg character varying(9),
+    bua11 character varying(9),
+    buasd11 character varying(9),
+    ru11ind character varying(9),
+    oac11 character varying(9),
+    lat double precision,
+    "long" double precision,
+    lep1 character varying(9),
+    lep2 character varying(9),
+    pfa character varying(9),
+    imd integer,
+    calncv character varying(9),
+    stp character varying(9)
+)
+
+--Load the data
+copy os_address.nspl (pcd, pcd2, pcds, dointr, doterm, usertype, oseast1m, osnrth1m, osgrdind, oa11, cty, ced, laua, ward, hlthau, nhser, ctry, rgn, pcon, eer, teclec, ttwa, pct, nuts, park, lsoa11, msoa11, wz11, ccg, bua11, buasd11, ru11ind, oac11, lat, "long", lep1, lep2, pfa, imd, calncv, stp)
+from 'C:\OS\ONS Postcodes\NSPL_MAY_2019_UK\Data\NSPL_MAY_2019_UK.csv' delimiter ',' quote '"' escape '"' csv HEADER;
+
+--add a geometry column - using crs 4258 which matches the crs of the addressbase and vat data
+alter table os_address.nspl
+add column  geom geometry(Point,4258) NULL 
+
+--Create the points in the geom column
+update os_address.nspl
+set geom = ST_Transform(ST_SetSRID(ST_MakePoint(long, lat), 4326), 4258);
+
+-- Spatial index for the geom column to speed up spatial queries 
+CREATE INDEX
+        nspl_geom_gist
+ON
+        os_address.nspl
+USING
+        gist
+        (
+                geom
+        );
+
+--add an index to postcode to speed up querying
+CREATE INDEX
+        nspl_pcd_indx
+ON
+        os_address.nspl(pcd);
